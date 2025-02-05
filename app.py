@@ -24,7 +24,7 @@ if 'search_results' not in st.session_state:
 st.title("Tune Timer")
 
 # Textbox for query input
-query = st.text_input("", "Enter song or artist name")
+query = st.text_input("Enter song or artist name")
 
 col1, col2 = st.columns([4, 1])
 
@@ -95,10 +95,10 @@ if st.session_state.selected_songs:
             st.write(selected_song)  # Display the song
         with col2:
             # Add a remove button for each song with a unique key
-            if st.button("Remove", key=f"remove_{i}"):
+            if st.button("❌", key=f"remove_{i}"):
                 # Remove the song from the list
                 st.session_state.selected_songs.pop(i)
-                st.experimental_rerun()  # Rerun the script to update the UI
+                st.rerun()  # Rerun the script to update the UI
 
 else:
     st.write("No songs selected.")
