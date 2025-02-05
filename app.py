@@ -24,13 +24,13 @@ if 'search_results' not in st.session_state:
 st.title("Tune Timer")
 
 # Textbox for query input
-query = st.text_input("Enter song or artist name")
+query = st.text_input("", placeholder="Enter song or artist name")
 
 col1, col2 = st.columns([4, 1])
 
 # Button to trigger search
 with col2:
-    if st.button("Search", type="primary"):
+    if st.button("Search", type="primary") or query:
         # Search query payload
         payload = {
             "requests": [
