@@ -1,16 +1,18 @@
 import streamlit as st
 import requests
 from datetime import timedelta
+import gspread
+from google.oauth2.service_account import Credentials
+import json
 
-# Algolia endpoint
-url = "https://vfeb8tk7gw-dsn.algolia.net/1/indexes/*/queries"
-
-# Headers for authentication
-headers = {
-    "x-algolia-application-id": "VFEB8TK7GW",
-    "x-algolia-api-key": "7eb409217eabcd7e10083bcbeee0974a",
+# Initialize headers and URL for Algolia authentication
+if 'headers' not in st.session_state:
+    st.session_state.headers = {
+    "x-algolia-application-id": st.secrets["ALGOLIA_CREDENTIALS"]["application_id"],
+    "x-algolia-api-key": st.secrets["ALGOLIA_CREDENTIALS"]["api_key"],
     "Content-Type": "application/json"
-}
+    }
+    st.session_state.url = st.secrets["ALGOLIA_CREDENTIALS"]["endpoint"]
 
 # Initialize session state for selected songs if not already initialized
 if 'selected_songs' not in st.session_state:
@@ -20,12 +22,55 @@ if 'selected_songs' not in st.session_state:
 if 'search_results' not in st.session_state:
     st.session_state.search_results = []
 
-# Initialize session state for search results if not already initialized
+# Initialize session state for deleted songs
 if 'deleted' not in st.session_state:
     st.session_state.deleted = False
 elif st.session_state.deleted is True:
     st.toast("Song removed", icon="😔")
     st.session_state.deleted = False
+
+if 'sheet_id' not in st.session_state:
+    st.session_state.sheet_id = st.secrets["GOOGLE_CREDENTIALS"]["sheet_id"]
+
+# Function to create a client
+def create_client():
+    # Check if 'client' exists in session_state, if not, create it
+    if "client" not in st.session_state:
+        # Define the scopes required for your Google Sheets API
+        scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+        google_credentials = st.secrets["GOOGLE_CREDENTIALS"]["value"]
+        credentials_dict = json.loads(google_credentials)
+
+        # Create credentials from the loaded dictionary
+        creds = Credentials.from_service_account_info(credentials_dict, scopes=scopes)
+
+        # Authorize the client and store it in session_state
+        st.session_state.client = gspread.authorize(creds)
+        st.toast("Client created")
+
+    return st.session_state.client
+
+# Function to fetch the sheet
+def fetch_sheet():
+    client = create_client()  # Ensure client is created
+    sheet = client.open_by_key(st.session_state.sheet_id).sheet1
+    return sheet
+
+# Function to save to Google Sheets
+def save_to_google_sheets():
+    # Open the Google Sheet
+    sheet = fetch_sheet()  # Replace with your sheet name
+    
+    # Clear existing data (optional)
+    sheet.clear()
+    sheet.append_row(["selected_song"])
+
+    # Ensure each song is in its own row (Google Sheets expects a list of lists)
+    formatted_songs = [[song] for song in st.session_state.selected_songs]  # Convert to list of lists
+    sheet.update("A2", formatted_songs)  # Writes from cell A1 downwards
+
+    # for song in st.session_state.selected_songs:
+    #    sheet.append_row([song])  # Ensure `song` is a list (e.g., [artist, title, length])
 
 def standardize_length(length):
     # Handle None or empty values
@@ -67,7 +112,7 @@ with col2:
         }
 
         # Making the request
-        response = requests.post(url, json=payload, headers=headers)
+        response = requests.post(st.session_state.url, json=payload, headers=st.session_state.headers)
 
         # Checking the response
         if response.status_code == 200:
@@ -91,7 +136,10 @@ if st.session_state.search_results:
     for i, hit in enumerate(st.session_state.search_results):
 
         # Standardize the length field
-        hit['length'] = standardize_length(hit['length'])
+        try:
+            hit['length'] = standardize_length(hit['length'])
+        except:
+            hit['length'] = "00:00"
         
         song = f"{hit['artistITSO']} - {hit['title']} [{hit['length']}]"
         
@@ -100,15 +148,36 @@ if st.session_state.search_results:
             # Add selected song to session state
             if song not in st.session_state.selected_songs:
                 st.session_state.selected_songs.append(song)
+                sheet = fetch_sheet()
+                sheet.append_row([song])
                 st.toast("Song added", icon="🎉")
             else:
                 st.toast("Song already added", icon="👍")
 
 # Display selected songs with a remove button for each
 st.divider()
-st.subheader("Selected Songs")
+col1, col2 = st.columns([4, 1])
+with col1:
+    st.subheader("Selected Songs")
+
+'''
+# Save to sheets when the list changes
+with col2:
+    if st.button("Save", key=f"save"):
+        save_to_google_sheets()
+        values = fetch_sheet()
+        # st.write(values.get_all_records())
+        st.toast("Selected songs saved!")
+'''
+
+'''
+    # Load songs
+    values = fetch_sheet()
+    st.write(values.get_all_records())
+'''
 
 if st.session_state.selected_songs:
+
     # Calculate total length of selected songs
     total_length_seconds = 0
     for song in st.session_state.selected_songs:
@@ -124,9 +193,9 @@ if st.session_state.selected_songs:
 
     # Display the total length in a box
     if total_length_seconds < 2 * 60 * 60:
-        st.success(f"We're singing for **{total_length}**🕺 Keep picking!")
+        st.success(f"We're singing for **{total_length}** 🕺 Keep picking!")
     else:
-        st.error(f"Oh no! We're singing for **{total_length}**😔")
+        st.error(f"Oh no! We're singing for **{total_length}** 😔")
 
     for i, selected_song in enumerate(st.session_state.selected_songs):
         col1, col2 = st.columns([4, 1])  # Create two columns for the song and button
@@ -137,9 +206,10 @@ if st.session_state.selected_songs:
             if st.button("❌", key=f"remove_{i}"):
                 # Remove the song from the list
                 st.session_state.selected_songs.pop(i)
+                save_to_google_sheets()
                 st.session_state.deleted = True
                 st.rerun()  # Rerun the script to update the UI
 
 else:
-    st.write("No songs selected")
+    st.write("No songs selected. Select up to two hours of songs.")
 
