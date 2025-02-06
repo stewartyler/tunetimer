@@ -160,7 +160,7 @@ col1, col2 = st.columns([4, 1])
 with col1:
     st.subheader("Selected Songs")
 
-'''
+_ = '''
 # Save to sheets when the list changes
 with col2:
     if st.button("Save", key=f"save"):
@@ -168,9 +168,7 @@ with col2:
         values = fetch_sheet()
         # st.write(values.get_all_records())
         st.toast("Selected songs saved!")
-'''
 
-'''
     # Load songs
     values = fetch_sheet()
     st.write(values.get_all_records())
