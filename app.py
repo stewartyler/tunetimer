@@ -123,42 +123,36 @@ else:
     # Textbox for query input
     query = st.text_input("", placeholder="Enter song or artist name")
 
-    col1, col2 = st.columns([4, 1])
-
     # Button to trigger search
-    with col2:
-        if st.button("Search", type="primary") or query:
-            # Search query payload
-            payload = {
-                "requests": [
-                    {
-                        "indexName": "songs",  # Replace with actual index name
-                        "params": f"query={query}"
-                    }
-                ]
-            }
+    if st.button("Search", type="primary") or query:
+        # Search query payload
+        payload = {
+            "requests": [
+                {
+                    "indexName": "songs",  # Replace with actual index name
+                    "params": f"query={query}"
+                }
+            ]
+        }
 
-            # Making the request
-            response = requests.post(st.session_state.url, json=payload, headers=st.session_state.headers)
+        # Making the request
+        response = requests.post(st.session_state.url, json=payload, headers=st.session_state.headers)
 
-            # Checking the response
-            if response.status_code == 200:
-                data = response.json()
-                if 'results' in data and len(data['results'][0]['hits']) > 0:
-                    # Store search results in session state
-                    st.session_state.search_results = data['results'][0]['hits']
-                    with col1:
-                        st.subheader("Search results")
-                else:
-                    st.session_state.search_results = []
-                    with col1:
-                        st.write("No results found")
+        # Checking the response
+        if response.status_code == 200:
+            data = response.json()
+            if 'results' in data and len(data['results'][0]['hits']) > 0:
+                # Store search results in session state
+                st.session_state.search_results = data['results'][0]['hits']
             else:
-                with col1:
-                    st.write(f"Request failed: {response.status_code}, {response.text}")
+                st.session_state.search_results = []
+                st.write("No results found")
+        else:
+            st.write(f"Request failed: {response.status_code}, {response.text}")
 
     # Display search results and handle song selection
     if st.session_state.search_results:
+        st.subheader("Search results")
         st.write("Click to select song")
         for i, hit in enumerate(st.session_state.search_results):
 
