@@ -113,10 +113,24 @@ else:
 
 
     ### HEADER ####
-    try:
-        st_lottie("https://lottie.host/70746a4d-f66d-4ffb-afe7-f57abd47766a/5jiEw2onV7.json",height=200)
-    except Exception as e:
-        st.text("")
+    # Cache lottie animation
+    @st.cache_resource
+    def load_lottie_url(url: str):
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return None
+
+    # Lotti animation url
+    lottie_url = "https://lottie.host/70746a4d-f66d-4ffb-afe7-f57abd47766a/5jiEw2onV7.json"
+
+    # Load and display the Lottie animation
+    lottie_json = load_lottie_url(lottie_url)
+    if lottie_json:
+        st_lottie(lottie_json, height=200)
+    else:
+        st.error("")
 
     # Streamlit UI
     st.title("Tune Timer")
