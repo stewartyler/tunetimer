@@ -123,7 +123,7 @@ else:
     # Textbox for query input
     query = st.text_input("", placeholder="Enter song or artist name")
 
-    col1, col2 = st.columns([4, 1])
+    col1, col2 = st.columns([1, 1])
 
     # Button to trigger search
     with col2:
