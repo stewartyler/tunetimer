@@ -123,7 +123,7 @@ else:
     # Textbox for query input
     query = st.text_input("", placeholder="Enter song or artist name")
 
-    col1, col2 = st.columns([1, 1])
+    col1, col2 = st.columns([4, 1])
 
     # Button to trigger search
     with col2:
@@ -147,8 +147,7 @@ else:
                 if 'results' in data and len(data['results'][0]['hits']) > 0:
                     # Store search results in session state
                     st.session_state.search_results = data['results'][0]['hits']
-                    with col1:
-                        st.subheader("Search results")
+                    st.subheader("Search results")
                 else:
                     st.session_state.search_results = []
                     with col1:
