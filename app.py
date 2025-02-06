@@ -200,8 +200,11 @@ else:
             total_length_seconds += minutes * 60 + seconds
 
         # Convert total length to a readable format (HH:MM:SS)
+        
         total_length = str(timedelta(seconds=total_length_seconds))
 
+        remaining_time_seconds = 2 * 60 * 60 - total_length_seconds
+        remaining_time = str(timedelta(seconds=remaining_time_seconds))
         
         st.write("Click to remove song")
 
@@ -209,7 +212,7 @@ else:
 
         if total_length_seconds < 2 * 60 * 60:
             with col2:
-                st.success(f"We're singing for **{total_length}** 🕺 Keep picking!")
+                st.success(f"We're singing for **{total_length}** 🕺 Keep picking! {remaining_time} remains...")
         else:
             with col2:
                 st.error(f"Oh no! We're singing for **{total_length}** 😔")
