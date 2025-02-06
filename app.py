@@ -113,23 +113,24 @@ else:
 
 
     ### HEADER ####
-    # Cache lottie animation
-    @st.cache_resource
-    def load_lottie_url(url: str):
-        response = requests.get(url)
+
+    # Function to load the Lottie JSON data
+    def load_lottie_url():
+        response = requests.get("https://lottie.host/70746a4d-f66d-4ffb-afe7-f57abd47766a/5jiEw2onV7.json")
         if response.status_code == 200:
             return response.json()
         else:
             return None
 
-    # Lotti animation url
-    lottie_url = "https://lottie.host/70746a4d-f66d-4ffb-afe7-f57abd47766a/5jiEw2onV7.json"
+    # Check if the Lottie JSON is already stored in session_state
+    if "lottie_json" not in st.session_state:
+        # If not, load it from the URL and store it in session_state
+        st.session_state.lottie_json = load_lottie_url()
 
-    # Load and display the Lottie animation
-    lottie_json = load_lottie_url(lottie_url)
-    if lottie_json:
-        st_lottie(lottie_json, height=200)
-    else:
+    # Display the Lottie animation
+    try:
+        st_lottie(st.session_state.lottie_json, height=200)
+    except:
         st.error("")
 
     # Streamlit UI
