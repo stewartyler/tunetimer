@@ -118,7 +118,7 @@ else:
     ### HEADER ###
     # Streamlit UI
     st.title("⏳ Tune Timer")
-    st.write("Search the SYNG song catalog and pick your favorite hits. We'll keep track of the time for you.")
+    st.write("Search the SYNG song catalog and select your favorite hits. We'll keep track of the time for you.")
 
     # Textbox for query input
     query = st.text_input("", placeholder="Enter song or artist name")
