@@ -13,6 +13,10 @@ if 'access' not in st.session_state:
 if st.session_state.access is False:
     left, middle, right = st.columns(3)
     with middle:
+        try:
+            st_lottie("https://lottie.host/70746a4d-f66d-4ffb-afe7-f57abd47766a/5jiEw2onV7.json",height=200)
+        except Exception as e:
+            st.text("")
         password = st.text_input("", placeholder="Enter password", type='password')
         if (st.button("Login", type="primary") or password):
             if st.secrets["ACCESS_CREDENTIALS"]["password"] == password:
@@ -112,27 +116,7 @@ else:
         return "00:00"
 
 
-    ### HEADER ####
-
-    # Function to load the Lottie JSON data
-    def load_lottie_url():
-        response = requests.get("https://lottie.host/70746a4d-f66d-4ffb-afe7-f57abd47766a/5jiEw2onV7.json")
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return None
-
-    # Check if the Lottie JSON is already stored in session_state
-    if "lottie_json" not in st.session_state:
-        # If not, load it from the URL and store it in session_state
-        st.session_state.lottie_json = load_lottie_url()
-
-    # Display the Lottie animation
-    try:
-        st_lottie(st.session_state.lottie_json, height=200)
-    except:
-        st.error("")
-
+    ### HEADER ###
     # Streamlit UI
     st.title("Tune Timer")
 
