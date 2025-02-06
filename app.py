@@ -6,7 +6,6 @@ from google.oauth2.service_account import Credentials
 import json
 from streamlit_lottie import st_lottie
 
-
 if 'access' not in st.session_state:
     st.session_state.access = False
 
@@ -26,7 +25,7 @@ if st.session_state.access is False:
                 st.toast("Incorrect password", icon="⚠️")
 
 else:
-
+    st.set_page_config(page_title="Tune Timer")
     # Initialize headers and URL for Algolia authentication
     if 'headers' not in st.session_state:
         st.session_state.headers = {
@@ -169,9 +168,9 @@ else:
                 hit['length'] = "00:00"
             
             song = f"{hit['artistITSO']} - {hit['title']} [{hit['length']}]"
-            
+
             # Display a button for each song with a unique key
-            if st.button(f"{song}", key=f"select_{i}"):
+            if st.button(f"➕{'&nbsp;'*3}{song}", key=f"select_{i}", help="Select song"):
                 # Add selected song to session state
                 if song not in st.session_state.selected_songs:
                     st.session_state.selected_songs.append(song)
@@ -183,23 +182,9 @@ else:
 
     # Display selected songs with a remove button for each
     st.divider()
-    col1, col2 = st.columns([4, 1])
+    col1, col2 = st.columns([1, 2])
     with col1:
         st.subheader("Selected Songs")
-
-    _ = '''
-    # Save to sheets when the list changes
-    with col2:
-        if st.button("Save", key=f"save"):
-            save_to_google_sheets()
-            values = fetch_sheet()
-            # st.write(values.get_all_records())
-            st.toast("Selected songs saved!")
-
-        # Load songs
-        values = fetch_sheet()
-        st.write(values.get_all_records())
-    '''
 
     if st.session_state.selected_songs:
 
@@ -216,24 +201,25 @@ else:
         # Convert total length to a readable format (HH:MM:SS)
         total_length = str(timedelta(seconds=total_length_seconds))
 
+        
+        st.write("Click to remove song")
+
         # Display the total length in a box
+
         if total_length_seconds < 2 * 60 * 60:
-            st.success(f"We're singing for **{total_length}** 🕺 Keep picking!")
+            with col2:
+                st.success(f"We're singing for **{total_length}** 🕺 Keep picking!")
         else:
-            st.error(f"Oh no! We're singing for **{total_length}** 😔")
+            with col2:
+                st.error(f"Oh no! We're singing for **{total_length}** 😔")
 
         for i, selected_song in enumerate(st.session_state.selected_songs):
-            col1, col2 = st.columns([4, 1])  # Create two columns for the song and button
-            with col1:
-                st.write(selected_song)  # Display the song
-            with col2:
-                # Add a remove button for each song with a unique key
-                if st.button("❌", key=f"remove_{i}"):
-                    # Remove the song from the list
-                    st.session_state.selected_songs.pop(i)
-                    save_to_google_sheets()
-                    st.session_state.deleted = True
-                    st.rerun()  # Rerun the script to update the UI
+            if st.button(f"{selected_song}{'&nbsp;'*3}❌", key=f"remove_{i}", help="Remove song"):
+                # Remove song fome session state
+                st.session_state.selected_songs.pop(i)
+                save_to_google_sheets()
+                st.session_state.deleted = True
+                st.rerun()
 
     else:
         st.write("No songs selected. Select up to two hours of songs.")
