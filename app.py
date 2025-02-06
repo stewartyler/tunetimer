@@ -20,6 +20,24 @@ if 'selected_songs' not in st.session_state:
 if 'search_results' not in st.session_state:
     st.session_state.search_results = []
 
+def standardize_length(length):
+    # Handle None or empty values
+    if length is None or length == '':
+        return "00:00"
+    
+    # Handle "0:00:00" format (extract MM:SS)
+    if len(length.split(':')) == 3:
+        _, mm, ss = length.split(':')
+        return f"{mm.zfill(2)}:{ss.zfill(2)}"
+    
+    # Handle "0:00" or "3:18" format (ensure two digits)
+    if len(length.split(':')) == 2:
+        mm, ss = length.split(':')
+        return f"{mm.zfill(2)}:{ss.zfill(2)}"
+    
+    # Default fallback
+    return "00:00"
+
 # Streamlit UI
 st.title("Tune Timer")
 
@@ -52,15 +70,21 @@ with col2:
                 st.session_state.search_results = data['results'][0]['hits']
             else:
                 st.session_state.search_results = []
-                st.write("No results found.")
+                with col1:
+                    st.write("No results found.")
         else:
-            st.write(f"Request failed: {response.status_code}, {response.text}")
+            with col1:
+                st.write(f"Request failed: {response.status_code}, {response.text}")
 
 # Display search results and handle song selection
 if st.session_state.search_results:
     st.subheader("Search results")
     for i, hit in enumerate(st.session_state.search_results):
-        song = f"{hit['artistITSO']} - {hit['title']} ({hit['length']})"
+
+        # Standardize the length field
+        hit['length'] = standardize_length(hit['length'])
+        
+        song = f"{hit['artistITSO']} - {hit['title']} [{hit['length']}]"
         
         # Display a button for each song with a unique key
         if st.button(f"{song}", key=f"select_{i}"):
@@ -77,8 +101,8 @@ if st.session_state.selected_songs:
     total_length_seconds = 0
     for song in st.session_state.selected_songs:
         # Extract the length from the song string (assuming format "Length: MM:SS")
-        time_start = song.find("(") + 1  # Find the index of "(" and move 1 character ahead
-        time_end = song.find(")")        # Find the index of ")"
+        time_start = song.find("[") + 1  # Find the index of "(" and move 1 character ahead
+        time_end = song.find("]")        # Find the index of ")"
         length_str = song[time_start:time_end] # Slice the string to get the time
         minutes, seconds = map(int, length_str.split(":"))
         total_length_seconds += minutes * 60 + seconds
