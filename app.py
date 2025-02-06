@@ -20,6 +20,13 @@ if 'selected_songs' not in st.session_state:
 if 'search_results' not in st.session_state:
     st.session_state.search_results = []
 
+# Initialize session state for search results if not already initialized
+if 'deleted' not in st.session_state:
+    st.session_state.deleted = False
+elif st.session_state.deleted is True:
+    st.toast("Song removed", icon="😔")
+    st.session_state.deleted = False
+
 def standardize_length(length):
     # Handle None or empty values
     if length is None or length == '':
@@ -68,17 +75,19 @@ with col2:
             if 'results' in data and len(data['results'][0]['hits']) > 0:
                 # Store search results in session state
                 st.session_state.search_results = data['results'][0]['hits']
+                with col1:
+                    st.subheader("Search results")
             else:
                 st.session_state.search_results = []
                 with col1:
-                    st.write("No results found.")
+                    st.write("No results found")
         else:
             with col1:
                 st.write(f"Request failed: {response.status_code}, {response.text}")
 
 # Display search results and handle song selection
 if st.session_state.search_results:
-    st.subheader("Search results")
+    st.write("Click to select song")
     for i, hit in enumerate(st.session_state.search_results):
 
         # Standardize the length field
@@ -91,6 +100,9 @@ if st.session_state.search_results:
             # Add selected song to session state
             if song not in st.session_state.selected_songs:
                 st.session_state.selected_songs.append(song)
+                st.toast("Song added", icon="🎉")
+            else:
+                st.toast("Song already added", icon="👍")
 
 # Display selected songs with a remove button for each
 st.divider()
@@ -111,7 +123,10 @@ if st.session_state.selected_songs:
     total_length = str(timedelta(seconds=total_length_seconds))
 
     # Display the total length in a box
-    st.info(f"Total time: **{total_length}**")
+    if total_length_seconds < 2 * 60 * 60:
+        st.success(f"We're singing for **{total_length}**🕺 Keep picking!")
+    else:
+        st.error(f"Oh no! We're singing for **{total_length}**😔")
 
     for i, selected_song in enumerate(st.session_state.selected_songs):
         col1, col2 = st.columns([4, 1])  # Create two columns for the song and button
@@ -122,8 +137,9 @@ if st.session_state.selected_songs:
             if st.button("❌", key=f"remove_{i}"):
                 # Remove the song from the list
                 st.session_state.selected_songs.pop(i)
+                st.session_state.deleted = True
                 st.rerun()  # Rerun the script to update the UI
 
 else:
-    st.write("No songs selected.")
+    st.write("No songs selected")
 
