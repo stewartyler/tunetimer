@@ -147,7 +147,8 @@ else:
                 if 'results' in data and len(data['results'][0]['hits']) > 0:
                     # Store search results in session state
                     st.session_state.search_results = data['results'][0]['hits']
-                    st.subheader("Search results")
+                    with col1:
+                        st.subheader("Search results")
                 else:
                     st.session_state.search_results = []
                     with col1:
